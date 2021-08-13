@@ -161,7 +161,7 @@ void ioinit()
     // Set Timer 0 to check button press
     TCCR0A = _BV(WGM01);
     TCCR0B = _BV(CS00) | _BV(CS02);
-    OCR0A = 100;        // OCCR0A can be adjusted to change the button debounce time
+    OCR0A = 120;        // OCCR0A can be adjusted to change the button debounce time
     TIMSK0 = _BV(OCIE0A);
 
     sei();  // Enable interrupts
