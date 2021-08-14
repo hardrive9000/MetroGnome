@@ -1,17 +1,17 @@
 // Metronome-v03
 
-#define F_CPU 1024000   // Adjust this to get the clock more precise
+#define F_CPU 1024000    // Adjust this to get the clock more precise
 
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
 
-#define sbi(port_name, pin_number)   (port_name |= 1<<pin_number)
-#define cbi(port_name, pin_number)   ((port_name) &= (uint8_t)~(1 << pin_number))
+#define sbi(port_name, pin_number)    (port_name |= 1<<pin_number)
+#define cbi(port_name, pin_number)    ((port_name) &= (uint8_t)~(1 << pin_number))
 
-uint16_t countUp = F_CPU / 1024;      // Dividing clock by 1024
-uint16_t speed = 60;        // Program initially runs at 60 BPM
-uint8_t leftDisplay = 6;        // Initialize output to show 60 BPM
+uint16_t countUp = F_CPU / 1024;    // Dividing clock by 1024
+uint16_t speed = 60;    // Program initially runs at 60 BPM
+uint8_t leftDisplay = 6;    // Initialize output to show 60 BPM
 uint8_t rightDisplay = 0;
 
 void ioinit();
@@ -22,6 +22,8 @@ ISR(TIMER1_COMPA_vect)
 {
     int buzzPeriod = 100;
     uint32_t buzzLength = 1000;
+
+    sbi(PORTC, 2);    // Turn ON led
 
     while(1)
     {
@@ -39,6 +41,8 @@ ISR(TIMER1_COMPA_vect)
         PINB = 0b00000100;
         _delay_us(buzzPeriod);
     }
+
+    cbi(PORTC, 2);    // Turn OFF led
 }
 
 // Interrupt Timer 2 checks for button presses
@@ -47,7 +51,7 @@ ISR(TIMER0_COMPA_vect)
     // Check down button
     if((PINB & (1<<4)) == 0)
     {
-        if(speed == 1)     // If speed = 1 go up to 299
+        if(speed == 1)    // If speed = 1 go up to 299
         {
             speed = 299;
             rightDisplay = 9;
@@ -119,14 +123,14 @@ int main()
     {
         if(flag == 0)
         {
-            cbi(PORTC, 1);  // Turn right display off
+            cbi(PORTC, 1);    // Turn right display off
             display(0, leftDisplay);    // Output to left display
             flag = 1;
         }
         else
         {
-            cbi(PORTC, 0);  // Turn left display off
-            display(1, rightDisplay);   // Output to right display
+            cbi(PORTC, 0);    // Turn left display off
+            display(1, rightDisplay);    // Output to right display
             flag = 0;
         }
         _delay_us(10);
@@ -154,17 +158,17 @@ void ioinit()
 
     // Set 16-bit Timer 1 for clicking
     TCCR1A = 0x00;
-    TCCR1B = (_BV(WGM12) | _BV(CS12) | _BV(CS10));  // Divide clock by 1024, CTC mode
-    OCR1A = (countUp*60)/speed; // Set top of counter
-    TIMSK1 = _BV(OCIE1A);   // Enable OCR1A interrupt
+    TCCR1B = (_BV(WGM12) | _BV(CS12) | _BV(CS10));    // Divide clock by 1024, CTC mode
+    OCR1A = (countUp * 60) / speed;    // Set top of counter
+    TIMSK1 = _BV(OCIE1A);    // Enable OCR1A interrupt
 
     // Set Timer 0 to check button press
     TCCR0A = _BV(WGM01);
     TCCR0B = _BV(CS00) | _BV(CS02);
-    OCR0A = 120;        // OCCR0A can be adjusted to change the button debounce time
+    OCR0A = 120;    // OCCR0A can be adjusted to change the button debounce time
     TIMSK0 = _BV(OCIE0A);
 
-    sei();  // Enable interrupts
+    sei();    // Enable interrupts
 }
 
 // This will output the corresponding
@@ -172,11 +176,11 @@ void ioinit()
 void display(int digit, int number)
 {
     if(digit == 0)
-        sbi(PORTC, 0);  // Ties display to ground
+        sbi(PORTC, 0);    // Ties display to ground
     else if (digit == 1)
         sbi(PORTC, 1);
 
-    switch(number)  // Set PIND, display pins, to correct output
+    switch(number)    // Set PIND, display pins, to correct output
     {
         case 0:
             PORTD = 0b11000000;
@@ -213,6 +217,7 @@ void display(int digit, int number)
     // Turn decimal point on if above 100 & 200
     if ((digit == 0) && (speed >= 200))
         cbi(PORTD, 7);
+
     if ((digit == 1) && (speed >= 100))
         cbi(PORTD, 7);
 }
